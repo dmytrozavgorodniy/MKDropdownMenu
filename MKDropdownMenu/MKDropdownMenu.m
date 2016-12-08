@@ -255,6 +255,9 @@ static UIImage *disclosureIndicatorImage = nil;
     _containerView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     _containerView.userInteractionEnabled = YES;
     [self.contentView addSubview:_containerView];
+    
+    self.layoutMargins = UIEdgeInsetsZero;
+    self.separatorInset = UIEdgeInsetsZero;
 }
 
 - (UIView *)currentCustomView {
@@ -330,16 +333,8 @@ static UIImage *disclosureIndicatorImage = nil;
 
 @property (strong, nonatomic) UIView *shadowView;
 
-@property (strong, nonatomic) UIView *borderView;
-@property (strong, nonatomic) CAShapeLayer *borderLayer;
-@property (assign, nonatomic) BOOL showsBorder;
-
 @property (strong, nonatomic) UIView *tableContainerView;
 @property (strong, nonatomic) UITableView *tableView;
-
-@property (strong, nonatomic) UIView *separatorContainerView;
-@property (assign, nonatomic) UIOffset separatorViewOffset;
-@property (assign, nonatomic) BOOL showsTopRowSeparator;
 
 @property (strong, nonatomic) UIColor *highlightColor;
 
@@ -348,12 +343,15 @@ static UIImage *disclosureIndicatorImage = nil;
 @property (assign, nonatomic) NSTextAlignment textAlignment;
 
 @property (assign, nonatomic) CGFloat cornerRadius;
-@property (assign, nonatomic) UIRectCorner roundedCorners;
 
 @property (assign, nonatomic) NSInteger rowsCount;
 @property (assign, nonatomic) NSInteger maxRows;
 @property (readonly, nonatomic) CGFloat maxHeight;
 @property (readonly, nonatomic) CGFloat contentHeight;
+
+@property (assign, nonatomic) CGFloat borderWidth;
+@property (strong, nonatomic) UIColor *borderColor;
+@property (assign, nonatomic) CGFloat separatorWidth;
 
 @end
 
@@ -400,13 +398,7 @@ static UIImage *disclosureIndicatorImage = nil;
     self.tableContainerView.backgroundColor = [UIColor blackColor];
     self.tableContainerView.translatesAutoresizingMaskIntoConstraints = NO;
     
-    CAShapeLayer *mask = [CAShapeLayer layer];
-    mask.frame = self.tableContainerView.bounds;
-    mask.fillColor = [[UIColor whiteColor] CGColor];
-    self.tableContainerView.layer.mask = mask;
     self.cornerRadius = kDefaultCornerRadius;
-    self.roundedCorners = UIRectCornerBottomLeft|UIRectCornerBottomRight;
-    
     
     // Table View
     
@@ -421,8 +413,6 @@ static UIImage *disclosureIndicatorImage = nil;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     self.tableView.separatorColor = [UIColor mk_defaultSeparatorColor];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
-    
-    self.showsTopRowSeparator = YES;
     
     [self.tableView registerClass:[MKDropdownMenuTableViewCell class] forCellReuseIdentifier:kCellIdentifier];
     
@@ -439,39 +429,10 @@ static UIImage *disclosureIndicatorImage = nil;
     self.shadowView.layer.shadowRadius = kDefaultCornerRadius;
     self.shadowView.layer.shadowOffset = CGSizeMake(0, 1);
     
-    
-    // Separator
-    
-    self.separatorContainerView = [UIView new];
-    self.separatorContainerView.clipsToBounds = NO;
-    self.separatorContainerView.backgroundColor = [UIColor clearColor];
-    self.separatorContainerView.translatesAutoresizingMaskIntoConstraints = NO;
-    
-    
-    // Border
-    
-    self.borderView = [UIView new];
-    self.borderView.backgroundColor = [UIColor clearColor];
-    self.borderView.userInteractionEnabled = NO;
-    self.borderView.translatesAutoresizingMaskIntoConstraints = NO;
-    
-    self.borderLayer = [CAShapeLayer layer];
-    self.borderLayer.frame = self.tableContainerView.bounds;
-    self.borderLayer.fillColor = [[UIColor clearColor] CGColor];
-    self.borderLayer.strokeColor = [[UIColor mk_defaultSeparatorColor] CGColor];
-    self.borderLayer.lineWidth = 1;
-    
-    [self.borderView.layer addSublayer:self.borderLayer];
-    
-    self.borderView.hidden = YES;
-    
-    
     /* Add subviews */
     
     [self.view addSubview:self.containerView];
     [self.containerView addSubview:self.shadowView];
-    [self.containerView addSubview:self.borderView];
-    [self.containerView addSubview:self.separatorContainerView];
     [self.containerView addSubview:self.tableContainerView];
     [self.tableContainerView addSubview:self.tableView];
     
@@ -481,34 +442,14 @@ static UIImage *disclosureIndicatorImage = nil;
     _heightConstraint = [NSLayoutConstraint constraintWithItem:self.tableContainerView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:kDefaultRowHeight];
     [self.tableContainerView addConstraint:_heightConstraint];
     
+    _topConstraint = [NSLayoutConstraint constraintWithItem:self.containerView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0];
     _leftConstraint = [NSLayoutConstraint constraintWithItem:self.containerView attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0.0];
     _rightConstraint = [NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:self.containerView attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0.0];
     
-    [self.view addConstraints:@[_leftConstraint, _rightConstraint,
-                                [NSLayoutConstraint constraintWithItem:self.containerView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]]];
-    
-    _topConstraint = [NSLayoutConstraint constraintWithItem:self.separatorContainerView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:0.0];
-    
-    [self.separatorContainerView addConstraint:_topConstraint];
-    
-    [self.containerView addConstraints:@[[NSLayoutConstraint constraintWithItem:self.separatorContainerView
-                                                                      attribute:NSLayoutAttributeLeft
-                                                                      relatedBy:NSLayoutRelationEqual
-                                                                         toItem:self.containerView
-                                                                      attribute:NSLayoutAttributeLeft
-                                                                     multiplier:1.0
-                                                                       constant:0.0],
-                                         [NSLayoutConstraint constraintWithItem:self.containerView
-                                                                      attribute:NSLayoutAttributeRight
-                                                                      relatedBy:NSLayoutRelationEqual
-                                                                         toItem:self.separatorContainerView
-                                                                      attribute:NSLayoutAttributeRight
-                                                                     multiplier:1.0
-                                                                       constant:0.0]]];
-    
+    [self.view addConstraints:@[_topConstraint, _leftConstraint, _rightConstraint]];
     
     [self.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|" options:kNilOptions metrics:nil views:@{@"v": self.tableContainerView}]];
-    [self.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[s][v]|" options:kNilOptions metrics:nil views:@{@"s": self.separatorContainerView, @"v": self.tableContainerView}]];
+    [self.containerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|" options:kNilOptions metrics:nil views:@{@"v": self.tableContainerView}]];
     
     [self.tableContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[v]|" options:kNilOptions metrics:nil views:@{@"v": self.tableView}]];
     [self.tableContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[v]|" options:kNilOptions metrics:nil views:@{@"v": self.tableView}]];
@@ -541,35 +482,6 @@ static UIImage *disclosureIndicatorImage = nil;
                                                                       attribute:NSLayoutAttributeBottom
                                                                      multiplier:1.0
                                                                        constant:0.0]]];
-    
-    [self.containerView addConstraints:@[[NSLayoutConstraint constraintWithItem:self.borderView
-                                                                      attribute:NSLayoutAttributeTop
-                                                                      relatedBy:NSLayoutRelationEqual
-                                                                         toItem:self.tableContainerView
-                                                                      attribute:NSLayoutAttributeTop
-                                                                     multiplier:1.0
-                                                                       constant:0.0],
-                                         [NSLayoutConstraint constraintWithItem:self.borderView
-                                                                      attribute:NSLayoutAttributeLeft
-                                                                      relatedBy:NSLayoutRelationEqual
-                                                                         toItem:self.tableContainerView
-                                                                      attribute:NSLayoutAttributeLeft
-                                                                     multiplier:1.0
-                                                                       constant:0.0],
-                                         [NSLayoutConstraint constraintWithItem:self.tableContainerView
-                                                                      attribute:NSLayoutAttributeRight
-                                                                      relatedBy:NSLayoutRelationEqual
-                                                                         toItem:self.borderView
-                                                                      attribute:NSLayoutAttributeRight
-                                                                     multiplier:1.0
-                                                                       constant:0.0],
-                                         [NSLayoutConstraint constraintWithItem:self.tableContainerView
-                                                                      attribute:NSLayoutAttributeBottom
-                                                                      relatedBy:NSLayoutRelationEqual
-                                                                         toItem:self.borderView
-                                                                      attribute:NSLayoutAttributeBottom
-                                                                     multiplier:1.0
-                                                                       constant:0.0]]];
 }
 
 - (void)viewDidLayoutSubviews {
@@ -591,15 +503,9 @@ static UIImage *disclosureIndicatorImage = nil;
 }
 
 - (void)updateMask {
-    CGFloat r = self.cornerRadius;
-    UIBezierPath *maskPath = [UIBezierPath bezierPathWithRoundedRect:self.tableContainerView.bounds
-                                                   byRoundingCorners:self.roundedCorners
-                                                         cornerRadii:CGSizeMake(r, r)];
-    CAShapeLayer *mask = (CAShapeLayer *)self.tableContainerView.layer.mask;
-    mask.path = maskPath.CGPath;
-    self.shadowView.layer.shadowRadius = MAX(r, kDefaultCornerRadius);
-    
-    self.borderLayer.path = maskPath.CGPath;
+    CGFloat cornerRadius = self.cornerRadius;
+    self.tableContainerView.layer.cornerRadius = cornerRadius;
+    self.shadowView.layer.shadowRadius = cornerRadius;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -635,7 +541,7 @@ static UIImage *disclosureIndicatorImage = nil;
 
 - (CGFloat)maxHeight {
     NSInteger limit = (self.maxRows > 0) ? self.maxRows : NSIntegerMax;
-    limit = MIN(limit, self.view.bounds.size.height / self.tableView.rowHeight);
+    limit = MIN(limit, (self.view.bounds.size.height - self.contentInset.top) / self.tableView.rowHeight);
     return limit * self.tableView.rowHeight;
 }
 
@@ -645,10 +551,13 @@ static UIImage *disclosureIndicatorImage = nil;
 }
 
 - (void)setContentInset:(UIEdgeInsets)contentInset {
+    _topConstraint.active = NO;
     _leftConstraint.active = NO;
     _rightConstraint.active = NO;
+    _topConstraint.constant = contentInset.top;
     _leftConstraint.constant = contentInset.left;
     _rightConstraint.constant = contentInset.right;
+    _topConstraint.active = YES;
     _leftConstraint.active = YES;
     _rightConstraint.active = YES;
     [self.view layoutIfNeeded];
@@ -658,54 +567,22 @@ static UIImage *disclosureIndicatorImage = nil;
     return UIEdgeInsetsMake(_topConstraint.constant, _leftConstraint.constant, 0, _rightConstraint.constant);
 }
 
-- (void)insertSeparatorView:(UIView *)separator {
-    [self.separatorContainerView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+#pragma mark - Properties
+
+- (void)setBorderWidth:(CGFloat)borderWidth {
+    _borderWidth = borderWidth;
     
-    CGFloat height = 0;
-    if (separator != nil) {
-        height = separator.frame.size.height;
-        separator.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
-        separator.frame = self.separatorContainerView.bounds;
-        [self.separatorContainerView addSubview:separator];
-    }
+    self.tableContainerView.layer.borderWidth = borderWidth;
+}
+
+- (void)setBorderColor:(UIColor *)borderColor {
+    _borderColor = borderColor;
     
-    _topConstraint.constant = height;
-    
-    [self updateSeparatorViewOffset];
+    self.tableContainerView.layer.borderColor = [borderColor CGColor];
 }
 
-- (void)updateSeparatorViewOffset {
-    for (UIView *separator in self.separatorContainerView.subviews) {
-        separator.frame = CGRectOffset(self.separatorContainerView.bounds,
-                                       self.separatorViewOffset.horizontal, self.separatorViewOffset.vertical);
-    }
-}
-
-- (void)setSeparatorViewOffset:(UIOffset)separatorViewOffset {
-    _separatorViewOffset = separatorViewOffset;
-    [self updateSeparatorViewOffset];
-}
-
-- (void)setShowsTopRowSeparator:(BOOL)showsTopRowSeparator {
-    if (showsTopRowSeparator) {
-        UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 0.5)];
-        header.backgroundColor = self.tableView.separatorColor;
-        self.tableView.tableHeaderView = header;
-    } else {
-        self.tableView.tableHeaderView = nil;
-    }
-}
-
-- (BOOL)showsTopRowSeparator {
-    return self.tableView.tableHeaderView != nil;
-}
-
-- (void)setShowsBorder:(BOOL)showsBorder {
-    self.borderView.hidden = !showsBorder;
-}
-
-- (BOOL)showsBorder {
-    return !self.borderView.hidden;
+- (void)setSeparatorWidth:(CGFloat)separatorWidth {
+    // TODO: Add implementation here...
 }
 
 #pragma mark - Gestures
@@ -746,14 +623,6 @@ static UIImage *disclosureIndicatorImage = nil;
     cell.accessoryView = [self.delegate accessoryViewForRow:indexPath.row];
     
     cell.textLabel.textAlignment = self.textAlignment;
-    
-    cell.layoutMargins = UIEdgeInsetsZero;
-    
-    if (self.showsBorder && indexPath.row == self.rowsCount - 1) {
-        cell.separatorInset = UIEdgeInsetsMake(0, CGRectGetWidth(tableView.bounds), 0, 0);
-    } else {
-        cell.separatorInset = UIEdgeInsetsZero;
-    }
     
     return cell;
 }
@@ -835,10 +704,13 @@ static const CGFloat kScrollViewBottomSpace = 5;
         };
     }
     
-    self.controller.view.frame = CGRectMake(CGRectGetMinX(containerView.bounds), topOffset,
-                                            CGRectGetWidth(containerView.bounds), height - topOffset);
-    
+    self.controller.view.frame = containerView.bounds;
     [containerView addSubview:self.controller.view];
+    [self.controller.view layoutIfNeeded];
+    
+    UIEdgeInsets insets = self.controller.contentInset;
+    insets.top = CGRectGetMinY(frame);
+    self.controller.contentInset = insets;
     [self.controller.view layoutIfNeeded];
     
     if (!animated) {
@@ -850,8 +722,9 @@ static const CGFloat kScrollViewBottomSpace = 5;
         return;
     }
     
-    CGAffineTransform t = CGAffineTransformMakeScale(1.0, 0.5);
-    t = CGAffineTransformTranslate(t, 0, -2 * CGRectGetHeight(self.controller.containerView.frame));
+    CGAffineTransform t = CGAffineTransformIdentity;
+    t = CGAffineTransformTranslate(t, 0.f, (-0.5f * CGRectGetHeight(self.controller.containerView.bounds)) + 0.5f);
+    t = CGAffineTransformScale(t, 1.f, 1.f/CGRectGetHeight(self.controller.containerView.bounds));
     self.controller.containerView.transform = t;
     
     self.controller.view.alpha = 0.0;
@@ -905,8 +778,9 @@ static const CGFloat kScrollViewBottomSpace = 5;
         return;
     }
     
-    CGAffineTransform t = CGAffineTransformMakeScale(1.0, 0.5);
-    t = CGAffineTransformTranslate(t, 0, -2 * CGRectGetHeight(self.controller.containerView.frame));
+    CGAffineTransform t = CGAffineTransformIdentity;
+    t = CGAffineTransformTranslate(t, 0.f, (-0.5f * CGRectGetHeight(self.controller.containerView.bounds)) + 0.5f);
+    t = CGAffineTransformScale(t, 1.f, 1.f/CGRectGetHeight(self.controller.containerView.bounds));
     
     _isAnimating = YES;
     
@@ -998,6 +872,15 @@ static const CGFloat kScrollViewBottomSpace = 5;
     self.selectedRows = [NSMutableArray new];
     self.buttons = [NSMutableArray new];
     self.separators = [NSMutableArray new];
+    
+    // set default value with side effect (side effect in setter)
+    self.dropdownBorderWidth = 0.f;
+    
+    // set default value with side effect (side effect in setter)
+    self.dropdownBorderColor = [UIColor clearColor];
+    
+    // set default value with side effect (side effect in setter)
+    self.rowSeparatorWidth = 1.f;
 }
 
 - (void)setupComponents {
@@ -1214,22 +1097,6 @@ static const CGFloat kScrollViewBottomSpace = 5;
     return self.contentViewController.tableView.bounces;
 }
 
-- (void)setDropdownShowsTopRowSeparator:(BOOL)dropdownShowsTopRowSeparator {
-    self.contentViewController.showsTopRowSeparator = dropdownShowsTopRowSeparator;
-}
-
-- (BOOL)dropdownShowsTopRowSeparator {
-    return self.contentViewController.showsTopRowSeparator;
-}
-
-- (void)setDropdownShowsBorder:(BOOL)dropdownShowsBorder {
-    self.contentViewController.showsBorder = dropdownShowsBorder;
-}
-
-- (BOOL)dropdownShowsBorder {
-    return self.contentViewController.showsBorder;
-}
-
 - (void)setBackgroundDimmingOpacity:(CGFloat)backgroundDimmingOpacity {
     self.contentViewController.view.backgroundColor = [UIColor colorWithWhite:(backgroundDimmingOpacity < 0 ? 1.0 : 0.0)
                                                                         alpha:fabs(backgroundDimmingOpacity)];
@@ -1252,20 +1119,6 @@ static const CGFloat kScrollViewBottomSpace = 5;
     UIColor *separatorColor = rowSeparatorColor ? rowSeparatorColor : [UIColor mk_defaultSeparatorColor];
     self.contentViewController.tableView.separatorColor = separatorColor;
     self.contentViewController.tableView.tableHeaderView.backgroundColor = separatorColor;
-    self.contentViewController.borderLayer.strokeColor = separatorColor.CGColor;
-}
-
-- (void)setSpacerView:(UIView *)spacerView {
-    _spacerView = spacerView;
-    [self.contentViewController insertSeparatorView:spacerView];
-}
-
-- (void)setSpacerViewOffset:(UIOffset)spacerViewOffset {
-    self.contentViewController.separatorViewOffset = spacerViewOffset;
-}
-
-- (UIOffset)spacerViewOffset {
-    return self.contentViewController.separatorViewOffset;
 }
 
 - (void)setComponentTextAlignment:(NSTextAlignment)componentTextAlignment {
@@ -1305,22 +1158,39 @@ static const CGFloat kScrollViewBottomSpace = 5;
     [self updateComponentButtons];
 }
 
+- (void)setBackgroundColor:(UIColor *)backgroundColor {
+    [super setBackgroundColor:backgroundColor];
+    
+    self.contentViewController.tableView.backgroundColor = backgroundColor;
+}
+
 - (void)setDropdownCornerRadius:(CGFloat)dropdownCornerRadius {
+    _dropdownCornerRadius = dropdownCornerRadius;
+    
+    self.layer.cornerRadius = dropdownCornerRadius;
+    
     self.contentViewController.cornerRadius = dropdownCornerRadius;
     [self.contentViewController updateMask];
 }
 
-- (CGFloat)dropdownCornerRadius {
-    return self.contentViewController.cornerRadius;
+- (void)setDropdownBorderWidth:(CGFloat)dropdownBorderWidth {
+    _dropdownBorderWidth = dropdownBorderWidth;
+    
+    self.layer.borderWidth = dropdownBorderWidth;
+    self.contentViewController.borderWidth = dropdownBorderWidth;
 }
 
-- (void)setDropdownRoundedCorners:(UIRectCorner)dropdownRoundedCorners {
-    self.contentViewController.roundedCorners = dropdownRoundedCorners;
-    [self.contentViewController updateMask];
+- (void)setDropdownBorderColor:(UIColor *)dropdownBorderColor {
+    _dropdownBorderColor = dropdownBorderColor;
+    
+    self.layer.borderColor = [dropdownBorderColor CGColor];
+    self.contentViewController.borderColor = dropdownBorderColor;
 }
 
-- (UIRectCorner)dropdownRoundedCorners {
-    return self.contentViewController.roundedCorners;
+- (void)setRowSeparatorWidth:(CGFloat)rowSeparatorWidth {
+    _rowSeparatorWidth = rowSeparatorWidth;
+    
+    self.contentViewController.separatorWidth = rowSeparatorWidth;
 }
 
 #pragma mark - Public Methods
@@ -1486,7 +1356,7 @@ static const CGFloat kScrollViewBottomSpace = 5;
         right = CGRectGetMaxX(buttonFrame);
     }
     
-    return UIEdgeInsetsMake(0, left, 0, CGRectGetWidth(presentingView.bounds) - right + 0.5);
+    return UIEdgeInsetsMake(0, left, 0, CGRectGetWidth(presentingView.bounds) - right);
 }
 
 - (void)cleanupSelectedComponents {

@@ -49,9 +49,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign, nonatomic) BOOL dropdownBouncesScroll UI_APPEARANCE_SELECTOR;
 
 /// Show the separator above the first row in dropdown.
+/// Tipsi Team: We don't support this feature
 @property (assign, nonatomic) BOOL dropdownShowsTopRowSeparator UI_APPEARANCE_SELECTOR;
 
 /// Show the border around the dropdown. Drawn in the same color as row separators. Default = NO.
+/// Tipsi Team: We don't support this feature
 @property (assign, nonatomic) BOOL dropdownShowsBorder UI_APPEARANCE_SELECTOR;
 
 /// The strength of the screen dimming (black color) under presented dropdown. Negative values produce white dimming color instead of black. Default = 0.2.
@@ -64,9 +66,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, strong, nonatomic) UIColor *rowSeparatorColor UI_APPEARANCE_SELECTOR;
 
 /// The view to place between header component and dropdown (like an arrow in popover). The height of the view's frame is preserved, and the view itself is stretched to fit the witdth of the dropdown.
+/// Tipsi Team: We don't support this feature
 @property (nullable, strong, nonatomic) UIView *spacerView;
 
 /// The offset for the spacer view.
+/// Tipsi Team: We don't support this feature
 @property (assign, nonatomic) UIOffset spacerViewOffset;
 
 /// The background color of the expanded header component.
@@ -91,6 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign, nonatomic) CGFloat dropdownCornerRadius UI_APPEARANCE_SELECTOR;
 
 /// The corners to be rounded in the dropdown. Default = UIRectCornerBottomLeft|UIRectCornerBottomRight.
+/// Tipsi Team: We don't support this feature
 @property (assign, nonatomic) UIRectCorner dropdownRoundedCorners UI_APPEARANCE_SELECTOR;
 
 /// If `useFullScreenWidth = YES`, the dropdown will occupy the full width of the screen for all components marked in `-dropdownMenu:shouldUseFullRowWidthForComponent:`, otherwise the width of these components will be equal to DropdownMenu's width. Default = NO.
@@ -107,6 +112,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// The currently expanded component. NSNotFound when no components are selected.
 @property (readonly, nonatomic) NSInteger selectedComponent;
+
+/// The border around the dropdown. Default = 0.f.
+@property (assign, nonatomic) CGFloat dropdownBorderWidth UI_APPEARANCE_SELECTOR;
+
+/// The border around the dropdown. Default = [UIColor cleanColor].
+@property (nullable, strong, nonatomic) UIColor *dropdownBorderColor UI_APPEARANCE_SELECTOR;
+
+/// The height of the dropdown rows separators (horizontal lines). Default = 1.f.
+@property (assign, nonatomic) CGFloat rowSeparatorWidth UI_APPEARANCE_SELECTOR;
 
 /// The number of components in the dropdown (cached from the data source).
 - (NSInteger)numberOfComponents;
