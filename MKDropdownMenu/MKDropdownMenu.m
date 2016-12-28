@@ -48,7 +48,6 @@ static NSString * const kCellIdentifier = @"cell";
 }
 @end
 
-
 #pragma mark - Component Button -
 
 static UIImage * MKDropdownMenuDisclosureIndicatorImage() {
@@ -258,6 +257,7 @@ static UIImage *disclosureIndicatorImage = nil;
     
     self.layoutMargins = UIEdgeInsetsZero;
     self.separatorInset = UIEdgeInsetsZero;
+    self.textLabel.numberOfLines = 0;
 }
 
 - (UIView *)currentCustomView {
@@ -943,7 +943,7 @@ static const CGFloat kScrollViewBottomSpace = 5;
     [button setDisclosureIndicatorImage:self.disclosureIndicatorImage];
     [button setSelectedBackgroundColor:self.selectedComponentBackgroundColor];
     [button setDisclosureIndicatorAngle:self.disclosureIndicatorSelectionRotation];
-    
+    button.titleLabel.numberOfLines = 0;
     UIView *customView = button.currentCustomView;
     
     if ([self.delegate respondsToSelector:@selector(dropdownMenu:viewForComponent:)]) {
