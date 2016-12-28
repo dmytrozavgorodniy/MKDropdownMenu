@@ -103,7 +103,7 @@ static UIImage *disclosureIndicatorImage = nil;
 
 - (void)setup {
     self.clipsToBounds = YES;
-    
+    self.titleLabel.numberOfLines = 0;
     _containerView = [UIView new];
     _containerView.frame = self.bounds;
     _containerView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
@@ -943,7 +943,7 @@ static const CGFloat kScrollViewBottomSpace = 5;
     [button setDisclosureIndicatorImage:self.disclosureIndicatorImage];
     [button setSelectedBackgroundColor:self.selectedComponentBackgroundColor];
     [button setDisclosureIndicatorAngle:self.disclosureIndicatorSelectionRotation];
-    button.titleLabel.numberOfLines = 0;
+
     UIView *customView = button.currentCustomView;
     
     if ([self.delegate respondsToSelector:@selector(dropdownMenu:viewForComponent:)]) {
